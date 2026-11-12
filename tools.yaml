@@ -1,0 +1,178 @@
+# One entry per tool. render_table.py builds both README tables from this
+# file. The rung a plan reaches is computed from the three booleans, never
+# typed, so a table cell cannot drift from the facts underneath it.
+#
+# Rungs, in order. A plan stops at the highest one it reaches.
+#   report          it shows where you are missing
+#   recommendation  it says which page to change or which source to pitch
+#   draft           it writes the content for you
+#   published       it pushes the page live in your CMS
+#
+# entry is the cheapest paid plan (or the trial when nothing is sold self
+# serve). top is the highest rung the vendor sells on any plan, with the
+# cheapest plan that reaches it. price is a number when published, null when
+# quoted by sales.
+#
+# Facts come from the AIclicks roundup (vendor pages checked November 2026)
+# plus aiclicks.io/pricing and promptwatch.com/pricing, both read on
+# 12 November 2026. Plans change often. Confirm before you buy.
+
+- id: aiclicks
+  name: AIclicks
+  url: https://aiclicks.io
+  entry:
+    plan: Starter
+    price: 59
+    unit: /mo
+    engines: 3, you pick
+    recommends: true
+    drafts: true
+    publishes: false
+  top:
+    plan: Starter
+    price: 59
+    recommends: true
+    drafts: true
+    publishes: false
+  trial: 3 days, card required
+  note: 30 prompts, 5 articles a month, CMS integration listed on every plan
+
+- id: otterly
+  name: Otterly AI
+  url: https://otterly.ai
+  entry:
+    plan: Lite
+    price: 29
+    unit: /mo
+    engines: 3 of 7
+    recommends: true
+    drafts: false
+    publishes: false
+  top:
+    plan: Lite
+    price: 29
+    recommends: true
+    drafts: false
+    publishes: false
+  trial: 7 days, no card
+  note: 3 recommendations a week on Lite, unlimited from Standard at $189
+
+- id: peec
+  name: Peec AI
+  url: https://peec.ai
+  entry:
+    plan: Starter
+    price: 95
+    unit: /mo
+    engines: 3 of 6, you pick
+    recommends: true
+    drafts: false
+    publishes: false
+  top:
+    plan: Starter
+    price: 95
+    recommends: true
+    drafts: false
+    publishes: false
+  trial: Yes, length not stated
+  note: 50 prompts, unlimited users, each extra engine from $30 a month
+
+- id: semrush
+  name: Semrush AI Visibility Toolkit
+  url: https://www.semrush.com
+  entry:
+    plan: Toolkit
+    price: 99
+    unit: /mo per domain
+    engines: 4, varies by report
+    recommends: true
+    drafts: false
+    publishes: false
+  top:
+    plan: Toolkit
+    price: 99
+    recommends: true
+    drafts: false
+    publishes: false
+  trial: 7 days
+  note: 25 prompts, 50 more cost $60 a month
+
+- id: promptwatch
+  name: Promptwatch
+  url: https://promptwatch.com
+  entry:
+    plan: Essential
+    price: 95
+    unit: /mo
+    engines: All 14 supported
+    recommends: false
+    drafts: false
+    publishes: false
+  top:
+    plan: Professional
+    price: 245
+    recommends: true
+    drafts: true
+    publishes: true
+  trial: 7 days
+  note: 50 prompts, content writing and crawler logs start on Professional
+
+- id: ahrefs
+  name: Ahrefs Brand Radar
+  url: https://ahrefs.com/brand-radar
+  entry:
+    plan: One platform
+    price: 199
+    unit: /mo per platform
+    engines: 1 per index, 6 for $699
+    recommends: false
+    drafts: false
+    publishes: false
+  top:
+    plan: One platform
+    price: 199
+    recommends: false
+    drafts: false
+    publishes: false
+  trial: None, free checker preview
+  note: Index of 551 million prompts, no prompt setup needed
+
+- id: scrunch
+  name: Scrunch AI
+  url: https://scrunch.com
+  entry:
+    plan: Core
+    price: 250
+    unit: /mo billed annually
+    engines: 4 (9 on Enterprise)
+    recommends: true
+    drafts: true
+    publishes: false
+  top:
+    plan: Core
+    price: 250
+    recommends: true
+    drafts: true
+    publishes: false
+  trial: 7 days, no card
+  note: 125 prompts, 1 page optimization a month, AXP is Enterprise only
+
+- id: profound
+  name: Profound
+  url: https://www.tryprofound.com
+  entry:
+    plan: Trial only
+    price: null
+    unit: ""
+    engines: 3 on trial (9 on Enterprise)
+    recommends: false
+    drafts: false
+    publishes: false
+  top:
+    plan: Enterprise
+    price: null
+    recommends: true
+    drafts: true
+    publishes: false
+  trial: 7 days, 50 fixed prompts
+  note: No self serve paid plan between the trial and Enterprise
