@@ -1,0 +1,16 @@
+# Describe the people you already have. geopick works out the lowest rung a
+# tool has to reach so that nothing is left without an owner.
+#
+#   strategist  someone who decides which page to fix or which source to pitch
+#   writer      someone who writes the article or the page rewrite
+#   publisher   someone who gets it live in the CMS
+#
+# Run it with:  python -m geopick pick --team examples/team.example.yaml
+
+team:
+  strategist: false
+  writer: false
+  publisher: true
+
+budget: 300   # USD per month, optional
+engines: 3    # minimum engines tracked at once, optional

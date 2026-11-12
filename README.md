@@ -6,37 +6,161 @@
   </a>
 </p>
 
-Connect any of the [best generative engine optimization tools](https://aiclicks.io/blog/best-generative-optimization-tools) to your brand and by the next morning you will know which prompts leave you out and which competitor got named in your place. All eight tools here produce that report, and the charts look close enough that the report is a poor basis for choosing between them.
+[![checks](https://github.com/SharonVivenix/best-generative-optimization-tools/actions/workflows/checks.yml/badge.svg)](https://github.com/SharonVivenix/best-generative-optimization-tools/actions/workflows/checks.yml)
+![python](https://img.shields.io/badge/python-3.9%2B-blue)
+![license](https://img.shields.io/badge/license-MIT-green)
 
-The work that changes an AI answer starts after the report. Someone has to decide which page to fix, write the new version, and get it live. Each tool below hands that work back to your team at a different point, and the point depends on the plan you buy, not the vendor's homepage. So this list ignores dashboards and records one thing per plan: the rung where the software stops.
+A machine readable dataset of the [best generative engine optimization tools](https://aiclicks.io/blog/best-generative-optimization-tools), plus `geopick`, a small Python CLI that filters it. Eight tools, one YAML file, a JSON Schema, and a test suite that fails the build when the docs drift from the data.
 
-Eight tools are compared, down from the twelve in the roundup this started from. Every row lives in [tools.yaml](tools.yaml), and [render_table.py](render_table.py) computes the rung from three yes or no facts per plan, so nobody types a verdict by hand.
+The dataset records one thing other comparisons skip. Every GEO tool tracks prompts and charts mentions. What differs is the point where the software stops and a person takes over, and that point depends on the plan, not the vendor. Each plan here carries three booleans (`recommends`, `drafts`, `publishes`), and the code derives everything else from them.
 
-## The four rungs
+```console
+$ python -m geopick pick --need draft --budget 300
+$  59/mo  AIclicks Starter  rung=draft  engines=3
+$ 245/mo  Promptwatch Professional  rung=published  engines=14
+$ 250/mo  Scrunch AI Core  rung=draft  engines=4
+```
 
-[Generative engine optimization](https://aiclicks.io/blog/what-is-generative-engine-optimization) is the practice of getting a brand mentioned and its pages cited inside the answers that ChatGPT, Perplexity, Gemini and Google AI Overviews write. A tool can carry you through four stages of that work.
+## Contents
 
-| Rung | The plan does this | Your team still does this |
+- [Install](#install)
+- [Usage](#usage)
+- [Data model](#data-model)
+- [The dataset](#the-dataset)
+- [Use it as a library](#use-it-as-a-library)
+- [Use the data without Python](#use-the-data-without-python)
+- [Project layout](#project-layout)
+- [Development](#development)
+- [Notes per tool](#notes-per-tool)
+- [FAQ](#faq)
+
+## Install
+
+There is nothing to build and one dependency.
+
+```bash
+git clone https://github.com/SharonVivenix/best-generative-optimization-tools.git
+cd best-generative-optimization-tools
+pip install -r requirements.txt
+python -m geopick check
+```
+
+Python 3.9 or newer. The only runtime dependency is PyYAML. `jsonschema` is optional and used by one test.
+
+## Usage
+
+```text
+python -m geopick <command> [options]
+
+  table     print both generated tables
+  write     rewrite the generated blocks in README.md
+  check     validate the dataset and fail on a stale README
+  pick      plans that fit a rung, a budget and an engine count
+  export    dump every plan as JSON or CSV
+```
+
+### pick
+
+| Flag | Type | Meaning |
 | --- | --- | --- |
-| Report | Runs your prompts and shows mentions, citations and competitors | Decides the fix, writes it, publishes it |
-| Recommendation | Names the page to change or the source to pitch | Writes it, publishes it |
-| Draft | Writes the article or the page rewrite | Edits it, publishes it |
-| Published page | Pushes the content into your CMS | Reviews it, handles outreach |
+| `--need` | `report`, `recommendation`, `draft`, `published` | Lowest rung the plan has to reach |
+| `--team` | path | YAML file listing the roles you already have, replaces `--need` |
+| `--budget` | integer | Monthly ceiling in USD |
+| `--engines` | integer | Minimum AI engines tracked at once |
+| `--include-custom` | flag | Also return plans that are quoted by sales |
+| `--json` | flag | Print JSON, for piping into `jq` or another script |
 
-A plan is placed on the highest rung it reaches. Climbing is not automatically better. A team with two writers and an outreach person gets little from paying for drafts, and a solo marketer gets little from a report with nobody to act on it.
+Results are sorted by price. The exit code is `0` when something fits and `2` when nothing does, so the command works inside a shell condition.
 
-## What went into each row
+### Picking from the best AI tools for generative engine optimization by team shape
 
-- The entry plan only, because that is where most teams start and where the homepage and the invoice disagree most.
-- Whether that plan recommends a fix, writes content, or publishes it, taken from the vendor's plan page.
-- How many AI engines the entry plan includes, which is often lower than the number the vendor supports.
-- The published price and its billing unit. A price quoted by sales is recorded as custom, never estimated.
-- The trial, and whether it asks for a card when the vendor says so.
-- The highest rung the vendor sells on any plan, with the cheapest plan that reaches it.
+Describing your team is usually easier than naming a rung. Copy [examples/team.example.yaml](examples/team.example.yaml) and mark the roles you have.
 
-Review site scores are left out on purpose. They shift weekly and they say nothing about where a plan stops.
+```yaml
+team:
+  strategist: false   # decides which page to fix or which source to pitch
+  writer: false       # writes the article or the rewrite
+  publisher: true     # gets it live in the CMS
 
-## Comparison
+budget: 300
+engines: 3
+```
+
+```console
+$ python -m geopick pick --team examples/team.example.yaml
+# team needs the tool to reach: draft
+$  59/mo  AIclicks Starter  rung=draft  engines=3
+$ 245/mo  Promptwatch Professional  rung=published  engines=14
+$ 250/mo  Scrunch AI Core  rung=draft  engines=4
+```
+
+`geopick` maps every missing role to the rung that replaces it and takes the highest one. No writer means the plan has to draft. No publisher means it has to publish.
+
+### export
+
+```console
+$ python -m geopick export --format csv
+tool,tool_id,plan,tier,price,rung,engines
+Otterly AI,otterly,Lite,entry,29,recommendation,3
+AIclicks,aiclicks,Starter,entry,59,draft,3
+Peec AI,peec,Starter,entry,95,recommendation,3
+Promptwatch,promptwatch,Essential,entry,95,report,14
+...
+```
+
+## Data model
+
+One list item per tool in [tools.yaml](tools.yaml), validated by [schema/tools.schema.json](schema/tools.schema.json).
+
+```yaml
+- id: promptwatch
+  name: Promptwatch
+  url: https://promptwatch.com
+  entry:                      # cheapest paid plan
+    plan: Essential
+    price: 95                 # integer USD per month, null when quoted by sales
+    unit: /mo
+    engines: All 14 supported # human readable
+    engines_included: 14      # integer, what --engines filters on
+    recommends: false
+    drafts: false
+    publishes: false
+  top:                        # cheapest plan that reaches the vendor's highest rung
+    plan: Professional
+    price: 245
+    recommends: true
+    drafts: true
+    publishes: true
+  trial: 7 days
+  note: 50 prompts, content writing and crawler logs start on Professional
+```
+
+The rung is never stored. `geopick.model.rung()` returns the highest flag that is true.
+
+| Rung | Flag | The plan does this | Your team still does this |
+| --- | --- | --- | --- |
+| `report` | none | Runs prompts, shows mentions, citations and competitors | Decides the fix, writes it, publishes it |
+| `recommendation` | `recommends` | Names the page to change or the source to pitch | Writes it, publishes it |
+| `draft` | `drafts` | Writes the article or the page rewrite | Edits it, publishes it |
+| `published` | `publishes` | Pushes the content into a CMS | Reviews it, handles outreach |
+
+Validation rules enforced by `python -m geopick check`:
+
+- `id` is unique, `url` is https.
+- All three flags are real booleans on both plans.
+- `price` is an integer or `null`, never a string and never a guess.
+- `publishes` requires `drafts`.
+- The `top` plan cannot reach a lower rung or cost less than `entry`.
+
+To get editor autocomplete on the data file, add this as its first line:
+
+```yaml
+# yaml-language-server: $schema=./schema/tools.schema.json
+```
+
+## The dataset
+
+Both tables below are build output. Do not edit them by hand, run `python -m geopick write`.
 
 <!-- TABLE:START -->
 | Tool | Entry plan | Price | Engines at entry | Stops at on entry | Left to your team | Highest rung sold | Trial |
@@ -51,11 +175,7 @@ Review site scores are left out on purpose. They shift weekly and they say nothi
 | [Profound](https://www.tryprofound.com) | Trial only | Custom | 3 on trial (9 on Enterprise) | Report | Deciding the fix, writing, publishing | Draft (Enterprise, custom price) | 7 days, 50 fixed prompts |
 <!-- TABLE:END -->
 
-Prices and plan limits were checked against vendor pages in November 2026 and change often. Confirm before you buy.
-
-## What each rung costs
-
-The second table answers a narrower question: what is the least you can pay, at a published price, to have software do the work up to a given rung?
+Cheapest published plan per rung, computed by `geopick.render.ladder()`:
 
 <!-- LADDER:START -->
 | Rung | Cheapest published plan that reaches it | Price | Next cheapest |
@@ -66,122 +186,121 @@ The second table answers a narrower question: what is the least you can pay, at 
 | Published page | Promptwatch Professional | $245/mo | None with a published price |
 <!-- LADDER:END -->
 
-Two things stand out. The gap between a report and a recommendation is zero dollars, since the cheapest tracker here already recommends fixes. The gap between a recommendation and a draft is $30 a month, and the next draft capable plan after that costs four times as much.
+Facts were read from vendor pages in November 2026. Plans change often, so treat the file as a snapshot and open a PR when a number moves.
 
-To run the same lookup for the rung you need:
+## Use it as a library
+
+```python
+from geopick import load, pick, cheapest, needed_rung
+
+tools = load()
+
+# every published plan that writes content and tracks 4 or more engines
+for p in pick(tools, need="draft", engines=4):
+    print(p.tool, p.plan, p.price, p.rung)
+
+# the floor price for a rung
+print(cheapest(tools, "published"))
+
+# rung implied by a team with a writer but nobody to plan the work
+print(needed_rung({"strategist": False, "writer": True, "publisher": True}))
+```
+
+`pick()` returns frozen `Plan` dataclasses with `tool`, `tool_id`, `plan`, `tier`, `price`, `rung` and `engines`. Every function in `geopick.model` is pure, with no file writes and no network calls, so it is safe to import into a notebook or a CI job.
+
+To run it against your own shortlist, pass another file: `python -m geopick --data my-tools.yaml pick --need draft`.
+
+## Use the data without Python
+
+The YAML file is the source of truth and the raw URL is stable.
 
 ```bash
-pip install pyyaml
-python render_table.py --need draft
+curl -sL https://raw.githubusercontent.com/SharonVivenix/best-generative-optimization-tools/main/tools.yaml
 ```
+
+For JSON, pipe the export through `jq`:
+
+```bash
+python -m geopick export | jq '.[] | select(.rung == "recommendation") | {tool, plan, price}'
+```
+
+## Project layout
 
 ```text
-$  59/mo  AIclicks Starter  (stops at draft)
-$ 245/mo  Promptwatch Professional  (stops at published page)
-$ 250/mo  Scrunch AI Core  (stops at draft)
+.
+├── tools.yaml                  source of truth, one entry per tool
+├── schema/tools.schema.json    JSON Schema for tools.yaml
+├── geopick/
+│   ├── model.py                load, rung, plans, pick, validate
+│   ├── render.py               Markdown tables and README splicing
+│   ├── cli.py                  argparse commands
+│   └── __main__.py             python -m geopick
+├── examples/team.example.yaml  input for pick --team
+├── tests/test_geopick.py       unittest suite, 12 tests
+├── render_table.py             shim kept for the old command
+└── .github/workflows/checks.yml
 ```
 
-## The eight tools
+## Development
 
-### 1. AIclicks
+```bash
+pip install -r requirements.txt jsonschema
+python -m unittest discover -s tests -v
+python -m geopick check
+```
 
-AIclicks is the least expensive plan on this list that writes content. Starter costs $59 a month and includes 30 tracked prompts refreshed daily, a ranked list of recommended actions drawn from the sources AI engines cite, and 5 AI optimized articles a month. Clicky, the agent that works inside the account, is on every plan.
+CI runs three jobs on every push and pull request:
 
-**Where it stops:** at the draft. A CMS integration is listed on every plan, and you still own the edit. Starter tracks three models of your choice in one country for one website, so a team that needs every engine from day one should price Pro at $189 first. GA4, API and MCP access also begin at Pro.
-**Price:** from $59 a month, 3 day trial with a card. Full tiers are on the [pricing page](https://aiclicks.io/pricing).
+| Job | What fails it |
+| --- | --- |
+| `data` | An invalid entry in `tools.yaml`, or README tables that no longer match it |
+| `tests` | Any unit test, on Python 3.9 and 3.12 |
+| `links` | A link to aiclicks.io or github.com in the README that does not return 200 |
 
-### 2. Otterly AI
+To change a fact, edit `tools.yaml`, run `python -m geopick write`, and commit both files. See [CONTRIBUTING.md](CONTRIBUTING.md) for what gets merged.
 
-Otterly is the cheapest way onto the ladder and it reaches the second rung straight away. The $29 Lite plan tracks mentions, citations and sentiment, then adds a GEO audit, prompt research and three recommendations a week.
+## Notes per tool
 
-**Where it stops:** at the recommendation. Otterly tells you what to change and has no content writing. Lite covers three of the seven engines it supports, and the next plan is $189, so growing out of Lite is a large step.
-**Price:** from $29 a month, 7 day trial without a card.
+Short context for the rows above. The `note` field in the data file carries the same facts in one line.
 
-### 3. Peec AI
+| Tool | Where the entry plan stops | Worth knowing before you filter |
+| --- | --- | --- |
+| AIclicks | Draft. Starter ranks the fixes and writes 5 articles a month | Three models of your choice, one country, one website. GA4, API and MCP start at Pro, $189 |
+| Otterly AI | Recommendation. Three a week on Lite, no content writing | Three of seven engines. The next plan is $189 |
+| Peec AI | Recommendation, through its Actions feature | Unlimited users. Each extra model adds $30 a month on Starter |
+| Semrush AI Visibility Toolkit | Recommendation, inside the Brand Performance report | 25 prompts on one domain. Engine coverage differs per report |
+| Promptwatch | Report on Essential | Professional at $245 adds writing, crawler logs and publishing to WordPress, Webflow and Framer |
+| Ahrefs Brand Radar | Report. A research index of 551 million prompts | Sold per AI platform. Claude only through custom prompts |
+| Scrunch AI | Draft, in small amounts. One page optimization a month | Its Agent Experience Platform is Enterprise only |
+| Profound | Report, on a 7 day trial with preset prompts | Nothing is sold between the trial and an Enterprise quote |
 
-Peec organizes everything around three numbers per prompt: visibility, position and sentiment. Its Actions feature, included from the $95 Starter plan, suggests moves such as claiming review site profiles or joining Reddit threads, and every plan has unlimited users.
-
-**Where it stops:** at the recommendation. Starter includes three models chosen from six, and each extra model adds $30 a month at that tier, more on higher ones. API access and Looker Studio wait until the $495 plan.
-**Price:** from $95 a month for 50 prompts, free trial of unstated length.
-
-### 4. Semrush AI Visibility Toolkit
-
-For a team already working in Semrush, this is one more toolkit behind the same login. It adds an AI Visibility Score, prompt research with volume and difficulty, and daily tracking, along with AI generated recommendations in the Brand Performance report.
-
-**Where it stops:** at the recommendation, with no content writing. The base plan tracks 25 prompts on one domain, and engine coverage differs from report to report. Another 50 prompts cost $60 a month, and each extra domain is another $99.
-**Price:** $99 a month per domain, 7 day trial.
-
-### 5. Promptwatch
-
-Promptwatch moves furthest between its first plan and its second. Essential at $95 is tracking only, though it runs every prompt across all 14 supported models. Professional at $245 adds content writing, crawler logs that tie AI agent visits to cited pages, and publishing to WordPress, Webflow and Framer. That makes it the only tool here with a published price for the top rung.
-
-**Where it stops:** at the report on Essential, at the published page on Professional. Budget for Professional if the content agent is the reason you are looking. City level tracking and shopping data need the $579 Business plan.
-**Price:** from $95 a month, 7 day trial.
-
-### 6. Ahrefs Brand Radar
-
-Brand Radar is a research tool, and it is honest about staying on the first rung. Ahrefs keeps an index of more than 551 million prompts tied to search demand, so you can look up any brand or category immediately, with no prompt setup and with history back to 2025.
-
-**Where it stops:** at the report. There is no content or optimization workflow. Index access is sold per AI platform at $199 a month, or $699 for all six, and Claude is reachable only through custom prompts. There is no trial, only a free checker preview.
-**Price:** from $199 a month per platform. It is sold standalone, so an Ahrefs subscription is not required.
-
-### 7. Scrunch AI
-
-Scrunch treats AI agents as a second audience for your site. Core bundles monitoring for 125 prompts with 5 site audits, basic content generation and one page optimization a month, which puts it on the draft rung from the entry plan.
-
-**Where it stops:** at the draft, in small quantities. Core covers four engines in one country, and Claude, Gemini and Google AI Mode need Enterprise. The Agent Experience Platform, which serves agents a machine readable version of your pages and is the feature Scrunch is known for, is Enterprise only.
-**Price:** from $250 a month billed annually, 7 day trial without a card.
-
-### 8. Profound
-
-Profound sells to enterprises and the product shows it: role based access, SCIM, SOC 2 and more than 200 integrations. Its AI Marketer agents identify marketing work and draft it for approval, next to prompt volume data and SKU level tracking in ChatGPT Shopping.
-
-**Where it stops:** at the draft on Enterprise. What a brand can use without a contract is a 7 day trial of 50 preset prompts on three engines, which shows the interface and little else. No paid self serve plan sits between that trial and a quote from sales.
-**Price:** custom for brands.
-
-## Which are the best AI tools for generative engine optimization for your team?
-
-The honest answer depends on who is on the payroll, and the decision tree is short.
-
-1. **You have writers and someone who does outreach.** Buy the second rung and stop. Otterly AI at $29 is enough to point the team at the right pages, and Peec AI is the better fit if many people need a login.
-2. **You have neither.** Buy the third rung. AIclicks at $59 is the cheapest plan that both ranks the fixes and writes the articles, and Scrunch AI does the same at $250 with site audits attached.
-3. **You want pages going live without a handoff.** Promptwatch Professional at $245 is the only published price for that.
-4. **You already pay for Semrush or Ahrefs.** Try their product before adding a vendor, and accept that neither writes content.
-5. **You need governance before features.** Profound, through procurement.
-
-Then price the plan you will be on in six months. Six of these eight include fewer engines on the entry plan than the vendor supports, so add up every engine, market and seat you expect to need before comparing.
-
-During a trial, load 10 to 20 prompts your buyers would ask and skip the visibility score. Check whether the tool names the page to change, and whether you would publish what it writes. The guide on [choosing prompts to track](https://aiclicks.io/blog/how-to-choose-prompt-to-track) covers how to build that set.
-
-Two questions settle most shortlists. Who on your team acts when a competitor is cited in your place? What does the bill come to once every engine you care about is switched on?
+For background on the practice itself, see this explainer on [generative engine optimization](https://aiclicks.io/blog/what-is-generative-engine-optimization). The current AIclicks tiers are on its [pricing page](https://aiclicks.io/pricing).
 
 ## FAQ
 
-### What are generative optimization tools?
+### Why model plans as booleans and not scores?
 
-Generative optimization tools, also called GEO tools, track how AI answer engines such as ChatGPT, Perplexity, Gemini and Google AI Overviews mention and cite a brand, and help improve those results. Most run a fixed set of prompts on a schedule and report visibility, competitors and cited sources. Some stop there, and some recommend fixes, write content or publish it.
+A score hides the reason behind it and invites argument. A boolean is checkable against one vendor page. Either the plan writes content or it does not, and a reviewer can confirm that in a minute.
 
-### Which tool is best on a small budget?
+### Why does `pick` return Promptwatch Professional for `--need draft`?
 
-Otterly AI at $29 a month if your team will write the fixes itself. AIclicks at $59 a month if you want the articles written too. Those are the two lowest published prices on this list, and they sit one rung apart.
+Rungs are cumulative. A plan that publishes also drafts, so it satisfies any lower requirement. Sort order is price, which is why it lands between the two draft plans.
 
-### Are there free GEO tools?
+### Why are some prices `null`?
 
-A few, with limits. Ahrefs offers a free AI Visibility Checker preview, and AIclicks publishes [free tools](https://aiclicks.io/tools) including a GEO audit. Most dashboard products offer a trial of 3 to 7 days in place of a free plan.
+The vendor quotes them through sales. `pick` leaves those plans out unless you pass `--include-custom`, because a plan without a number cannot be compared against a budget.
 
-### How is GEO different from SEO?
+### Can I add a tool that is not on the list?
 
-SEO works to rank your pages so people click through to your site. GEO works to get your brand named and your pages cited inside the answer an AI engine writes. Both need crawlable, well sourced pages. GEO also depends on third party sources the engines draw from, such as review sites and Reddit threads.
+Yes. Add an entry, run `python -m geopick check`, and open a PR with a link to the vendor page that backs each flag. Affiliate links and review site scores are not accepted.
 
-### Why compare entry plans and not the top tier?
+### How do I track a different set of tools privately?
 
-Because the entry plan is what gets bought. A vendor that supports nine engines and sells four on its first tier is a four engine tool until you upgrade, and a tool that writes content only from its second tier is a reporting tool at the first.
+Keep your own YAML file in the same shape and pass it with `--data`. The package never assumes the bundled file.
 
-## Contributing and credits
+## Credits
 
-To fix a price, flip a plan fact or add a tool, edit [tools.yaml](tools.yaml), run `python render_table.py --write`, and open a PR per [CONTRIBUTING.md](CONTRIBUTING.md).
-
-The shortlist and plan facts started from the AIclicks roundup of generative engine optimization tools, which covers twelve products. AIclicks is listed first here and is the publisher of that roundup, so weigh the ordering with that in mind. The rung model, both computed tables and the writeups are our own. Vendor review scores from the roundup were dropped, and the Promptwatch engine count was corrected against its pricing page.
+The shortlist and plan facts started from the AIclicks roundup linked at the top, which covers twelve products. AIclicks is listed first in the data file and is the publisher of that roundup, so weigh the ordering with that in mind. The rung model, the code and the schema are our own. Vendor review scores from the roundup were dropped, and the Promptwatch engine count was corrected against its pricing page.
 
 ## License
 

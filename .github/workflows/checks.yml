@@ -10,16 +10,37 @@ env:
   CLIENT_DOMAIN: aiclicks.io
 
 jobs:
-  table:
-    name: Generated tables match tools.yaml
+  data:
+    name: Dataset valid and README in sync
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install pyyaml
-      - run: python render_table.py --check
+      - run: pip install -r requirements.txt
+      - run: python -m geopick check
+
+  tests:
+    name: Tests on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -r requirements.txt jsonschema
+      - run: python -m unittest discover -s tests -v
+      - name: CLI smoke run
+        run: |
+          python -m geopick table
+          python -m geopick pick --need draft --budget 300
+          python -m geopick pick --team examples/team.example.yaml --json
+          python -m geopick export --format csv
+          python render_table.py --check
 
   links:
     name: Links resolve

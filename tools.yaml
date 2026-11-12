@@ -1,4 +1,4 @@
-# One entry per tool. render_table.py builds both README tables from this
+# One entry per tool. The geopick package builds both README tables from this
 # file. The rung a plan reaches is computed from the three booleans, never
 # typed, so a table cell cannot drift from the facts underneath it.
 #
@@ -11,7 +11,8 @@
 # entry is the cheapest paid plan (or the trial when nothing is sold self
 # serve). top is the highest rung the vendor sells on any plan, with the
 # cheapest plan that reaches it. price is a number when published, null when
-# quoted by sales.
+# quoted by sales. engines_included is the number of AI engines the entry
+# plan tracks at once, as an integer the CLI can filter on.
 #
 # Facts come from the AIclicks roundup (vendor pages checked November 2026)
 # plus aiclicks.io/pricing and promptwatch.com/pricing, both read on
@@ -25,6 +26,7 @@
     price: 59
     unit: /mo
     engines: 3, you pick
+    engines_included: 3
     recommends: true
     drafts: true
     publishes: false
@@ -45,6 +47,7 @@
     price: 29
     unit: /mo
     engines: 3 of 7
+    engines_included: 3
     recommends: true
     drafts: false
     publishes: false
@@ -65,6 +68,7 @@
     price: 95
     unit: /mo
     engines: 3 of 6, you pick
+    engines_included: 3
     recommends: true
     drafts: false
     publishes: false
@@ -85,6 +89,7 @@
     price: 99
     unit: /mo per domain
     engines: 4, varies by report
+    engines_included: 4
     recommends: true
     drafts: false
     publishes: false
@@ -105,6 +110,7 @@
     price: 95
     unit: /mo
     engines: All 14 supported
+    engines_included: 14
     recommends: false
     drafts: false
     publishes: false
@@ -125,6 +131,7 @@
     price: 199
     unit: /mo per platform
     engines: 1 per index, 6 for $699
+    engines_included: 1
     recommends: false
     drafts: false
     publishes: false
@@ -145,6 +152,7 @@
     price: 250
     unit: /mo billed annually
     engines: 4 (9 on Enterprise)
+    engines_included: 4
     recommends: true
     drafts: true
     publishes: false
@@ -165,12 +173,14 @@
     price: null
     unit: ""
     engines: 3 on trial (9 on Enterprise)
+    engines_included: 3
     recommends: false
     drafts: false
     publishes: false
   top:
     plan: Enterprise
     price: null
+    engines_included: 9
     recommends: true
     drafts: true
     publishes: false
