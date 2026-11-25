@@ -273,7 +273,7 @@ Short context for the rows above. The `note` field in the data file carries the 
 | Scrunch AI | Draft, in small amounts. One page optimization a month | Its Agent Experience Platform is Enterprise only |
 | Profound | Report, on a 7 day trial with preset prompts | Nothing is sold between the trial and an Enterprise quote |
 
-For background on the practice itself, see this explainer on [generative engine optimization](https://aiclicks.io/blog/what-is-generative-engine-optimization). The current AIclicks tiers are on its [pricing page](https://aiclicks.io/pricing).
+The current AIclicks tiers are on its [pricing page](https://aiclicks.io/pricing).
 
 ## FAQ
 
@@ -297,9 +297,9 @@ Yes. Add an entry, run `python -m geopick check`, and open a PR with a link to t
 
 Keep your own YAML file in the same shape and pass it with `--data`. The package never assumes the bundled file.
 
-## Credits
+## Notes
 
-The shortlist and plan facts started from the AIclicks roundup linked at the top, which covers twelve products. AIclicks is listed first in the data file and is the publisher of that roundup, so weigh the ordering with that in mind. The rung model, the code and the schema are our own. Vendor review scores from the roundup were dropped, and the Promptwatch engine count was corrected against its pricing page.
+Plan facts were checked against vendor pages in November 2026 and will drift. Vendor review scores are left out on purpose, and the Promptwatch engine count was checked against its pricing page.
 
 ## License
 

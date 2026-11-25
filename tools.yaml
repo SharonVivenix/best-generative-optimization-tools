@@ -14,8 +14,8 @@
 # quoted by sales. engines_included is the number of AI engines the entry
 # plan tracks at once, as an integer the CLI can filter on.
 #
-# Facts come from the AIclicks roundup (vendor pages checked November 2026)
-# plus aiclicks.io/pricing and promptwatch.com/pricing, both read on
+# Facts were checked on vendor pages in November 2026, including
+# aiclicks.io/pricing and promptwatch.com/pricing, both read on
 # 12 November 2026. Plans change often. Confirm before you buy.
 
 - id: aiclicks
